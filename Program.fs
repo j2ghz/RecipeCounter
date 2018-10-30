@@ -15,7 +15,7 @@ let deduplicate (list:('a * int) list) =
 
 let graphItem item =
     let n = (item |> fst)
-    sprintf "\"%s\" [label=\"%s X %i\"];" n n ((item |> snd))
+    sprintf "\"%s\" [label=\"%s X %i\",shape=box];" n n ((item |> snd))
 
 let graphItems times items output =
     items
@@ -50,7 +50,7 @@ let rec recipes rs itemq :ItemRecipe list=
 
 [<EntryPoint>]
 let main argv =
-    let r = recipes Recipes.recipes Assembler
+    let r = recipes Recipes.recipes BasicChemicalReactor
     printfn "digraph G {"
     graph r |> List.iter(printfn "%O")
     printfn "}"
