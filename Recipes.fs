@@ -14,42 +14,94 @@ type Recipe =
 
 type Recipeq = Recipe * int
 
-let SteelPlate x = ("Steel Plate", x)
-let SteelRod x = ("Steel Rod", x)
-let TinCable1 x = ("1x Tin Cable", x)
-let ElectricMotor x = ("Electric Motor", x)
-let ElectricPiston x = ("Electric Piston", x)
-let RubberPlate x = ("Rubber Plate", x)
-let RubberBar x = ("Rubber Bar", x)
-let ConveyorModule x = ("Conveyor Module", x)
+let inline (.*) (i, q) number = (i, q * number)
+let Redstone = ("Redstone", 1)
+let SteelIngot = ("Steel Ingot", 1)
+let SteelPlate = ("Steel Plate", 1)
+let SteelRod = ("Steel Rod", 1)
+let IronIngot = ("Iron Ingot", 1)
+let IronPlate = ("Iron Plate", 1)
+let IronRod = ("Iron Rod", 1)
+let WroughtIronIngot = ("Wrought Iron Ingot", 1)
+let WroughtIronPlate = ("Wrought Iron Plate", 1)
+let WroughtIronRod = ("Wrought Iron Rod", 1)
+let MagneticIronRod = ("Magnetic Iron Rod", 1)
+let SmallSteelGear = ("Small Steel Gear", 1)
+let TinWire1 = ("1x Tin Wire", 1)
+let TinCable1 = ("1x Tin Cable", 1)
+let RubberPlate = ("Rubber Plate", 1)
+let RubberBar = ("Rubber Bar", 1)
+//Components
+let LVMachineCasing = ("LV Machine Casing", 1)
+let LVMachineHull = ("LV Machine Hull", 1)
+let ElectricMotor = ("Electric Motor", 1)
+let ElectricPiston = ("Electric Piston", 1)
+let ElectronicCircuit = ("Electronic Circuit", 1)
+let ConveyorModule = ("Conveyor Module", 1)
+let RobotArm = ("Robot Arm", 1)
+//Machines
+let Assembler = ("Assembler", 1)
 
 let recipes: Recipe list =
-    [{Output = ("Steel Plate", 1)
-      Input = [("Steel Ingot", 1)]}
-     {Output = ("LV Machine Casing", 1)
-      Input = [("Steel Plate", 8)]}
-     {Output = ElectricMotor 1
+    [{Output = SteelPlate
+      Input = [SteelIngot]}
+     {Output = SteelRod
+      Input = [SteelIngot]}
+     {Output = IronPlate
+      Input = [IronIngot]}
+     {Output = IronRod
+      Input = [IronIngot]}
+     {Output = TinCable1
+      Input = [TinWire1; RubberPlate]}
+     {Output = MagneticIronRod
       Input =
-          [TinCable1 2
-           ("Iron Rod", 2)
-           ("Magnetic Iron Rod", 1)
+          [IronRod
+           Redstone .* 4]}
+     {Output = SmallSteelGear
+      Input =
+          [SteelPlate
+           SteelRod .* 2]}
+     {Output = LVMachineCasing
+      Input = [SteelPlate .* 8]}
+     {Output = RobotArm
+      Input =
+          [ElectricMotor .* 2
+           ElectronicCircuit
+           ElectricPiston
+           TinCable1 .* 3
+           SteelRod .* 2]}
+     {Output = ElectricMotor
+      Input =
+          [TinCable1 .* 2
+           IronRod .* 2
+           MagneticIronRod
            ("1x Copper Wire", 4)]}
-     {Output = ElectricPiston 1
+     {Output = ElectricPiston
       Input =
-          [TinCable1 2
-           ElectricMotor 2
-           SteelPlate 3
-           SteelRod 2
-           ("Small Steel Gear", 1)]}
-     {Output = ConveyorModule 1
+          [TinCable1 .* 2
+           ElectricMotor .* 2
+           SteelPlate .* 3
+           SteelRod .* 2
+           SmallSteelGear]}
+     {Output = ConveyorModule
       Input =
-          [ElectricMotor 2
-           ElectricPiston 1
-           RubberPlate 6]}
-     {Output = ("LV Machine Hull", 1)
+          [ElectricMotor .* 2
+           ElectricPiston
+           RubberPlate .* 6]}
+     {Output = LVMachineHull
       Input =
-          [("LV Machine Casing", 1)
-           ("1x Tin Cable", 2)
-           ("Wrought Iron Plate", 2)]}
-     {Output = RubberPlate 1
-      Input = [RubberBar 2]}]
+          [LVMachineCasing
+           TinCable1 .* 2
+           WroughtIronPlate .* 2
+           SteelPlate]}
+     {Output = WroughtIronPlate
+      Input = [WroughtIronIngot]}
+     {Output = RubberPlate
+      Input = [RubberBar .* 2]}
+     {Output = Assembler
+      Input =
+          [LVMachineHull
+           TinCable1 .* 2
+           RobotArm .* 2
+           ConveyorModule .* 2
+           ElectronicCircuit .* 2]}]

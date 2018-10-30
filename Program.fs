@@ -1,51 +1,57 @@
 ﻿// Learn more about F# at http://fsharp.org
 open Recipes
 
-let deduplicate(inv: ('a * int) list) =
-    inv
-    |> List.groupBy fst
-    |> List.map(fun (i, q) -> (i, List.sumBy snd q))
-    |> List.sortBy fst
+type ItemRecipe =
+| Item of Itemq
+| Recipe of Recipeq
 
 let check ((item, _)) (recipe: Recipe) = recipe.Output
                                          |> fst = item
 
-let format item =
-    item
-    |> fst
-    |> sprintf "\"%s\""
+let deduplicate (list:('a * int) list) =
+    list
+    |> List.groupBy fst
+    |> List.map (fun (i,q) -> (i,q |> List.sumBy snd))
 
-let graphItem times item =
+let graphItem item =
     let n = (item |> fst)
-    sprintf "\"%s\" [label=\"%s X %i\"]" n n ((item |> snd) * times)
+    sprintf "\"%s\" [label=\"%s X %i\"];" n n ((item |> snd))
 
 let graphItems times items output =
     items
     |> List.collect
            (fun item -> 
-           [graphItem times item
-            
-            sprintf "\"%s\" -> \"%s\" [label=\"%i\"]" (item |> fst) output 
+           [            
+            sprintf "\"%s\" -> \"%s\" [label=\"%i\"];" (item |> fst) output 
                 (times * snd item)])
 
-let graph(recipes: Recipeq list) =
-    recipes
+let graph(irs: ItemRecipe list) =
+  [ yield! irs
+    |> List.choose (function |Item i -> Some i | _ -> None)
+    |> List.groupBy fst
+    |> List.map (fun (i,q) -> (i,q |> List.sumBy snd))
+    |> List.map graphItem
+    yield! irs
+    |> List.choose (function |Recipe r -> Some r | _ -> None) 
+    |> List.groupBy fst
+    |> List.map (fun (i,q) -> (i,q |> List.sumBy snd))
     |> List.collect(fun (recipe, times) -> 
-           [yield (graphItem times recipe.Output)
-            yield! (graphItems times recipe.Input (recipe.Output |> fst))])
-
-let rec recipes rs itemq: Recipeq list =
+           [yield! (graphItems times recipe.Input (recipe.Output |> fst))])
+  ]
+let rec recipes rs itemq :ItemRecipe list=
     match rs |> List.tryFind(check itemq) with
     | Some recipe -> 
         let times = (itemq |> snd) / (recipe.Output |> snd)
-        (recipe, times) :: (recipe.Input
+        Recipe (recipe, times) :: (recipe.Input
                             |> List.map
                                    (fun (item, amount) -> (item, amount * times))
                             |> List.collect(recipes rs))
-    | None -> []
+    | None -> [Item itemq]
 
 [<EntryPoint>]
 let main argv =
-    let r = recipes Recipes.recipes (ConveyorModule 1) |> deduplicate
+    let r = recipes Recipes.recipes Assembler
+    printfn "digraph G {"
     graph r |> List.iter(printfn "%O")
-    0 // return an integer exit code
+    printfn "}"
+    0
