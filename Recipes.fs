@@ -6,11 +6,13 @@ type Item = string
 
 type Itemq = Item * int
 
-type Inventory = Itemq list
+type Items = Itemq list
 
 type Recipe =
-    {Input: Inventory
+    {Input: Items
      Output: Itemq}
+
+type Recipeq = Recipe * int
 
 let SteelPlate x = ("Steel Plate", x)
 let SteelRod x = ("Steel Rod", x)
@@ -50,4 +52,4 @@ let recipes: Recipe list =
            ("1x Tin Cable", 2)
            ("Wrought Iron Plate", 2)]}
      {Output = RubberPlate 1
-      Input = [RubberBar 1]}]
+      Input = [RubberBar 2]}]

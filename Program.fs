@@ -1,29 +1,51 @@
 ﻿// Learn more about F# at http://fsharp.org
-open System
 open Recipes
 
-let deduplicate(inv: Inventory): Inventory =
+let deduplicate(inv: ('a * int) list) =
     inv
     |> List.groupBy fst
-    |> List.map(fun (i,q) -> (i,List.sumBy snd q))
+    |> List.map(fun (i, q) -> (i, List.sumBy snd q))
     |> List.sortBy fst
 
-let check ((item,_)) (recipe:Recipe) = recipe.Output |> fst = item
+let check ((item, _)) (recipe: Recipe) = recipe.Output
+                                         |> fst = item
 
-let rec compute' (recipes:Recipe list) (req: Itemq) =
-    match recipes |> List.tryFind (check req) with
-    | Some recipe ->
-        recipe.Input
-        |> List.map (fun (items,i) -> (items, i * snd req))
-        |> List.collect (compute' recipes)
-    | None -> [req]
-    
-let compute (recipes: Recipe list) (req:Itemq list) =
-    req
-    |> List.collect (compute' recipes)
-    |> deduplicate
+let format item =
+    item
+    |> fst
+    |> sprintf "\"%s\""
+
+let graphItem times item =
+    let n = (item |> fst)
+    sprintf "\"%s\" [label=\"%s X %i\"]" n n ((item |> snd) * times)
+
+let graphItems times items output =
+    items
+    |> List.collect
+           (fun item -> 
+           [graphItem times item
+            
+            sprintf "\"%s\" -> \"%s\" [label=\"%i\"]" (item |> fst) output 
+                (times * snd item)])
+
+let graph(recipes: Recipeq list) =
+    recipes
+    |> List.collect(fun (recipe, times) -> 
+           [yield (graphItem times recipe.Output)
+            yield! (graphItems times recipe.Input (recipe.Output |> fst))])
+
+let rec recipes rs itemq: Recipeq list =
+    match rs |> List.tryFind(check itemq) with
+    | Some recipe -> 
+        let times = (itemq |> snd) / (recipe.Output |> snd)
+        (recipe, times) :: (recipe.Input
+                            |> List.map
+                                   (fun (item, amount) -> (item, amount * times))
+                            |> List.collect(recipes rs))
+    | None -> []
 
 [<EntryPoint>]
 let main argv =
-    (compute Recipes.recipes [ConveyorModule 1]) |> List.iter (printfn "%O")
+    let r = recipes Recipes.recipes (ConveyorModule 1) |> deduplicate
+    graph r |> List.iter(printfn "%O")
     0 // return an integer exit code
