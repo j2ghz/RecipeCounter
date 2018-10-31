@@ -15,12 +15,12 @@ let deduplicate(list: ('a * int) list) =
 
 let graphItem item =
     let n = (item |> fst)
-    sprintf "\"%s\" [label=\"%s X %i\",shape=box];" n n ((item |> snd))
+    sprintf "\"%s\" [label=\"%s: %i\", style=filled, fillcolor=\"cornflowerblue\"];" n n ((item |> snd))
 
 let graphRecipe times items output =
-    sprintf "\"%s\"[shape=record, label=\"{{%s}|%s}\"]" output 
+    sprintf "\"%s\"[shape=record, label=\"{{%s}|%s}\"];" output 
         (items
-         |> List.map(fst >> (fun i -> sprintf "<%s>%s" i i))
+         |> List.map(fun (i,q) -> sprintf "<%s>%s: %i" i i q)
          |> String.concat "|") output 
     :: (items 
         |> List.collect
