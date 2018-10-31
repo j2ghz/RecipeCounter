@@ -2,50 +2,61 @@
 open Recipes
 
 type ItemRecipe =
-| Item of Itemq
-| Recipe of Recipeq
+    | Item of Itemq
+    | Recipe of Recipeq
 
 let check ((item, _)) (recipe: Recipe) = recipe.Output
                                          |> fst = item
 
-let deduplicate (list:('a * int) list) =
+let deduplicate(list: ('a * int) list) =
     list
     |> List.groupBy fst
-    |> List.map (fun (i,q) -> (i,q |> List.sumBy snd))
+    |> List.map(fun (i, q) -> (i, q |> List.sumBy snd))
 
 let graphItem item =
     let n = (item |> fst)
     sprintf "\"%s\" [label=\"%s X %i\",shape=box];" n n ((item |> snd))
 
-let graphItems times items output =
-    items
-    |> List.collect
-           (fun item -> 
-           [            
-            sprintf "\"%s\" -> \"%s\" [label=\"%i\"];" (item |> fst) output 
-                (times * snd item)])
+let graphRecipe times items output =
+    sprintf "\"%s\"[shape=record, label=\"{{%s}|%s}\"]" output 
+        (items
+         |> List.map(fst >> (fun i -> sprintf "<%s>%s" i i))
+         |> String.concat "|") output 
+    :: (items 
+        |> List.collect
+               (fun item -> 
+               [sprintf "\"%s\" -> \"%s\":\"%s\" [label=\"%i\"];" (item |> fst) output (item |> fst)
+                    (times * snd item)]))
 
 let graph(irs: ItemRecipe list) =
-  [ yield! irs
-    |> List.choose (function |Item i -> Some i | _ -> None)
-    |> List.groupBy fst
-    |> List.map (fun (i,q) -> (i,q |> List.sumBy snd))
-    |> List.map graphItem
-    yield! irs
-    |> List.choose (function |Recipe r -> Some r | _ -> None) 
-    |> List.groupBy fst
-    |> List.map (fun (i,q) -> (i,q |> List.sumBy snd))
-    |> List.collect(fun (recipe, times) -> 
-           [yield! (graphItems times recipe.Input (recipe.Output |> fst))])
-  ]
-let rec recipes rs itemq :ItemRecipe list=
+    [yield! irs
+            |> List.choose(function 
+                   | Item i -> Some i
+                   | _ -> None)
+            |> List.groupBy fst
+            |> List.map(fun (i, q) -> (i, q |> List.sumBy snd))
+            |> List.map graphItem
+     
+     yield! irs
+            |> List.choose(function 
+                   | Recipe r -> Some r
+                   | _ -> None)
+            |> List.groupBy fst
+            |> List.map(fun (i, q) -> (i, q |> List.sumBy snd))
+            |> List.collect
+                   (fun (recipe, times) -> 
+                   [yield! (graphRecipe times recipe.Input 
+                                (recipe.Output |> fst))])]
+
+let rec recipes rs itemq: ItemRecipe list =
     match rs |> List.tryFind(check itemq) with
     | Some recipe -> 
         let times = (itemq |> snd) / (recipe.Output |> snd)
-        Recipe (recipe, times) :: (recipe.Input
-                            |> List.map
-                                   (fun (item, amount) -> (item, amount * times))
-                            |> List.collect(recipes rs))
+        Recipe(recipe, times) :: (recipe.Input
+                                  |> List.map
+                                         (fun (item, amount) -> 
+                                         (item, amount * times))
+                                  |> List.collect(recipes rs))
     | None -> [Item itemq]
 
 [<EntryPoint>]
