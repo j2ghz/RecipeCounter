@@ -77,6 +77,7 @@ let LVPump = ("Electric Pump LV", 1)
 //Machines
 let Assembler = ("Assembler", 1)
 let BasicChemicalReactor = ("Basic Chemical Reactor", 1)
+let LVCombustion = ("Basic Combustion Generator", 1)
 
 let recipes: Recipe list =
     [{Output = SteelPlate
@@ -231,4 +232,11 @@ let recipes: Recipe list =
            RubberRing .* 2
            ("Bronze Plate", 3)
            ElectricMotor
-           TinCable1]}]
+           TinCable1]}
+     {Output = LVCombustion
+      Input =
+          [LVMachineHull
+           ElectricMotor .* 2
+           ElectricPiston .* 2
+           ElectronicCircuit
+           ("Steel Gear", 2)]}]
