@@ -61,7 +61,7 @@ let rec recipes rs itemq: ItemRecipe list =
 
 [<EntryPoint>]
 let main argv =
-    let r = recipes Recipes.recipes (Recipes.ElectronicCircuit .* 10)
+    let r = recipes Recipes.recipes Recipes.LVPump
     printfn "digraph G {"
     graph r |> List.iter(printfn "%O")
     printfn "}"

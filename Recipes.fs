@@ -41,6 +41,7 @@ let CopperWire1 = ("1x Copper Wire", 1)
 let FineCopperWire = ("Fine Copper Wire", 1)
 let RubberPlate = ("Rubber Plate", 1)
 let RubberBar = ("Rubber Bar", 1)
+let RubberRing = ("Rubber Ring", 1)
 let RawRubberDust = ("Raw Rubber Dust", 1)
 let SulfurDust = ("Sulfur Dust", 1)
 let StickyResin = ("Sticky Resin", 1)
@@ -72,6 +73,7 @@ let ElectricPiston = ("Electric Piston", 1)
 let ElectronicCircuit = ("Electronic Circuit", 1)
 let ConveyorModule = ("Conveyor Module", 1)
 let RobotArm = ("Robot Arm", 1)
+let LVPump = ("Electric Pump LV", 1)
 //Machines
 let Assembler = ("Assembler", 1)
 let BasicChemicalReactor = ("Basic Chemical Reactor", 1)
@@ -152,14 +154,14 @@ let recipes: Recipe list =
           [TinPlate .* 4
            TinRing
            TinScrew]}
-     {Output = ElectronicCircuit
+     {(*{Output = ElectronicCircuit
       Input =
           [SteelCasing
            CircuitBoard
            Resistor .* 2
            VacuumTube .* 2
-           RedAlloyCable1 .* 3]}
-     {Output = RedAlloyCable1
+           RedAlloyCable1 .* 3]}*)
+      Output = RedAlloyCable1
       Input = [RedAlloyWire1; RubberPlate]}
      {Output = RedAlloyWire1
       Input = [RedAlloyIngot]}
@@ -221,4 +223,12 @@ let recipes: Recipe list =
      {Output = QuartzSand
       Input = [Sand]}
      {Output = TinyPileFlintDust .* 4
-      Input = [Flint]}]
+      Input = [Flint]}
+     {Output = LVPump
+      Input =
+          [TinScrew
+           TinRotor
+           RubberRing .* 2
+           ("Bronze Plate", 3)
+           ElectricMotor
+           TinCable1]}]
