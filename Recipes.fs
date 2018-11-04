@@ -15,6 +15,7 @@ type Recipe =
 type Recipeq = Recipe * int
 
 let inline (.*) (i, q) number = (i, q * number)
+//Misc
 let GlassTube = ("Glass Tube", 1)
 let GlassDust = ("Glass Dust", 1)
 let QuartzSand = ("Quartz Sand", 1)
@@ -22,10 +23,13 @@ let TinyPileFlintDust = ("Tiny Pile of Flint Dust", 1)
 let Flint = ("Flint", 1)
 let Sand = ("Sand", 1)
 let Redstone = ("Redstone", 1)
+//Steel
 let SteelIngot = ("Steel Ingot", 1)
 let SteelPlate = ("Steel Plate", 1)
 let SteelRod = ("Steel Rod", 1)
 let SteelCasing = ("Steel Casing", 1)
+let SmallSteelFluidPipe = ("Small Steel Fluid Pipe", 1)
+//Iron
 let IronIngot = ("Iron Ingot", 1)
 let IronPlate = ("Iron Plate", 1)
 let IronRod = ("Iron Rod", 1)
@@ -34,17 +38,21 @@ let WroughtIronPlate = ("Wrought Iron Plate", 1)
 let WroughtIronRod = ("Wrought Iron Rod", 1)
 let MagneticIronRod = ("Magnetic Iron Rod", 1)
 let SmallSteelGear = ("Small Steel Gear", 1)
+//Cables/Wires
 let TinWire1 = ("1x Tin Wire", 1)
 let TinCable1 = ("1x Tin Cable", 1)
 let CopperIngot = ("Copper Ingot", 1)
 let CopperWire1 = ("1x Copper Wire", 1)
 let FineCopperWire = ("Fine Copper Wire", 1)
+//Rubber
 let RubberPlate = ("Rubber Plate", 1)
 let RubberBar = ("Rubber Bar", 1)
 let RubberRing = ("Rubber Ring", 1)
 let RawRubberDust = ("Raw Rubber Dust", 1)
 let SulfurDust = ("Sulfur Dust", 1)
 let StickyResin = ("Sticky Resin", 1)
+let MoltenRubber = ("Molten Rubber", 1)
+//Tin
 let TinRotor = ("Tin Rotor", 1)
 let TinPlate = ("Tin Plate", 1)
 let TinRing = ("Tin Ring", 1)
@@ -52,12 +60,14 @@ let TinScrew = ("Tin Screw", 1)
 let TinBolt = ("Tin Bolt", 1)
 let TinIngot = ("Tin Ingot", 1)
 let TinRod = ("Tin Rod", 1)
+//Red Alloy
 let RedAlloyIngot = ("Red Alloy Ingot", 1)
 let RedAlloyWire1 = ("1x Red Alloy Wire", 1)
 let RedAlloyCable1 = ("Red Alloy Cable", 1)
 let RedAlloyRod = ("Red Alloy Rod", 1)
 let RedAlloyBolt = ("Red Alloy Bolt", 1)
 let VacuumTube = ("Vacuum Tube", 1)
+//Circuit
 let Resistor = ("Resistor", 1)
 let CoalDust = ("Coal Dust", 1)
 let CircuitBoard = ("Circuit Board", 1)
@@ -74,22 +84,34 @@ let ElectronicCircuit = ("Electronic Circuit", 1)
 let ConveyorModule = ("Conveyor Module", 1)
 let RobotArm = ("Robot Arm", 1)
 let LVPump = ("Electric Pump LV", 1)
+let MiningPipe = ("Mining Pipe", 1)
 //Machines
 let Assembler = ("Assembler", 1)
 let BasicChemicalReactor = ("Basic Chemical Reactor", 1)
 let LVCombustion = ("Basic Combustion Generator", 1)
+let LVDistillery = ("Basic Distillery", 1)
+
+let R o i =
+    {Output = o
+     Input = i}
 
 let recipes: Recipe list =
     [{Output = SteelPlate
       Input = [SteelIngot]}
      {Output = SteelRod
       Input = [SteelIngot]}
+     R (MiningPipe .* 2) [SmallSteelFluidPipe]
+     R (SmallSteelFluidPipe .* 6) [SteelPlate .* 6]
      {Output = IronPlate
       Input = [IronIngot]}
      {Output = IronRod
       Input = [IronIngot]}
      {Output = TinCable1
-      Input = [TinWire1; RubberPlate]}
+      Input =
+          [TinWire1
+           MoltenRubber .* 144]}
+     R (MoltenRubber .* 1296) [RawRubberDust .* 9
+                               SulfurDust]
      {Output = MagneticIronRod
       Input =
           [IronRod
@@ -116,7 +138,7 @@ let recipes: Recipe list =
      {Output = ElectricPiston
       Input =
           [TinCable1 .* 2
-           ElectricMotor .* 2
+           ElectricMotor
            SteelPlate .* 3
            SteelRod .* 2
            SmallSteelGear]}
@@ -170,8 +192,6 @@ let recipes: Recipe list =
       Input =
           [SulfurDust
            RawRubberDust .* 3]}
-     {Output = RawRubberDust .* 3
-      Input = [StickyResin]}
      {Output = TinPlate
       Input = [TinIngot]}
      {Output = TinRing
@@ -203,7 +223,7 @@ let recipes: Recipe list =
       Input = [RedAlloyRod]}
      {Output = RedAlloyRod
       Input = [RedAlloyIngot]}
-     {Output = TinWire1
+     {Output = TinWire1 .* 2
       Input = [TinIngot]}
      {Output = CircuitBoard
       Input =
@@ -239,4 +259,5 @@ let recipes: Recipe list =
            ElectricMotor .* 2
            ElectricPiston .* 2
            ElectronicCircuit
-           ("Steel Gear", 2)]}]
+           ("Steel Gear", 2)]}
+     R ("Steel Gear", 1) [SteelIngot .* 8]]
