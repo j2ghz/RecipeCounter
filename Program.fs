@@ -1,74 +1,117 @@
-﻿// Learn more about F# at http://fsharp.org
-open Recipes
+module RecipeCounter.App
 
-type ItemRecipe =
-    | Item of Itemq
-    | Recipe of Recipeq
+open System
+open System.IO
+open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Cors.Infrastructure
+open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.Logging
+open Microsoft.Extensions.DependencyInjection
+open Giraffe
 
-let check ((item, _)) (recipe: Recipe) = recipe.Output
-                                         |> fst = item
+// ---------------------------------
+// Models
+// ---------------------------------
 
-let deduplicate(list: ('a * int) list) =
-    list
-    |> List.groupBy fst
-    |> List.map(fun (i, q) -> (i, q |> List.sumBy snd))
+type Message =
+    {
+        Text : string
+    }
 
-let graphItem item =
-    let n = (item |> fst)
-    sprintf 
-        "\"%s\" [label=\"%s: %i\", style=filled, fillcolor=\"cornflowerblue\"];" 
-        n n ((item |> snd))
+// ---------------------------------
+// Views
+// ---------------------------------
 
-let graphRecipe times items output =
-    sprintf "\"%s\"[shape=record, label=\"{{%s}|%s}\"];" output 
-        (items
-         |> List.map(fun (i, q) -> sprintf "<%s>%s: %i" i i q)
-         |> String.concat "|") output 
-    :: (items 
-        |> List.collect
-               (fun item -> 
-               [sprintf "\"%s\" -> \"%s\":\"%s\" [label=\"%i\"];" (item |> fst) 
-                    output (item |> fst) (times * snd item)]))
+module Views =
+    open GiraffeViewEngine
 
-let graph(irs: ItemRecipe list) =
-    [yield! irs
-            |> List.choose(function 
-                   | Item i -> Some i
-                   | _ -> None)
-            |> List.groupBy fst
-            |> List.map(fun (i, q) -> (i, q |> List.sumBy snd))
-            |> List.map graphItem
-     
-     yield! irs
-            |> List.choose(function 
-                   | Recipe r -> Some r
-                   | _ -> None)
-            |> List.groupBy fst
-            |> List.map(fun (i, q) -> (i, q |> List.sumBy snd))
-            |> List.collect
-                   (fun (recipe, times) -> 
-                   [yield! (graphRecipe times recipe.Input 
-                                (recipe.Output |> fst))])]
-let divideRoundUp a b =
-    (a / b) + (if a % b = 0 then 0 else 1)
+    let layout (content: XmlNode list) =
+        html [] [
+            head [] [
+                title []  [ encodedText "RecipeCounter" ]
+                link [ _rel  "stylesheet"
+                       _type "text/css"
+                       _href "/main.css" ]
+            ]
+            body [] content
+        ]
 
-let rec recipes rs items: ItemRecipe list =
-    items
-    |> List.collect(fun itemq -> 
-           match rs |> List.tryFind(check itemq) with
-           | Some recipe -> 
-               let times = divideRoundUp (itemq |> snd) (recipe.Output |> snd)
-               Recipe(recipe, times) :: (recipe.Input
-                                         |> List.map
-                                                (fun (item, amount) -> 
-                                                (item, amount * times))
-                                         |> recipes rs)
-           | None -> [Item itemq])
+    let partial () =
+        h1 [] [ encodedText "RecipeCounter" ]
+
+    let index (model : Message) =
+        [
+            partial()
+            p [] [ encodedText model.Text ]
+        ] |> layout
+
+// ---------------------------------
+// Web app
+// ---------------------------------
+
+let indexHandler (name : string) =
+    let greetings = sprintf "Hello %s, from Giraffe!" name
+    let model     = { Text = greetings }
+    let view      = Views.index model
+    htmlView view
+
+let webApp =
+    choose [
+        GET >=>
+            choose [
+                route "/" >=> indexHandler "world"
+                routef "/hello/%s" indexHandler
+            ]
+        setStatusCode 404 >=> text "Not Found" ]
+
+// ---------------------------------
+// Error handler
+// ---------------------------------
+
+let errorHandler (ex : Exception) (logger : ILogger) =
+    logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
+    clearResponse >=> setStatusCode 500 >=> text ex.Message
+
+// ---------------------------------
+// Config and Main
+// ---------------------------------
+
+let configureCors (builder : CorsPolicyBuilder) =
+    builder.WithOrigins("http://localhost:8080")
+           .AllowAnyMethod()
+           .AllowAnyHeader()
+           |> ignore
+
+let configureApp (app : IApplicationBuilder) =
+    let env = app.ApplicationServices.GetService<IHostingEnvironment>()
+    (match env.IsDevelopment() with
+    | true  -> app.UseDeveloperExceptionPage()
+    | false -> app.UseGiraffeErrorHandler errorHandler)
+        .UseHttpsRedirection()
+        .UseCors(configureCors)
+        .UseStaticFiles()
+        .UseGiraffe(webApp)
+
+let configureServices (services : IServiceCollection) =
+    services.AddCors()    |> ignore
+    services.AddGiraffe() |> ignore
+
+let configureLogging (builder : ILoggingBuilder) =
+    let filter (l : LogLevel) = l.Equals LogLevel.Error
+    builder.AddFilter(filter).AddConsole().AddDebug() |> ignore
 
 [<EntryPoint>]
-let main argv =
-    let r = recipes Recipes.recipes [TinRotor .*2; LVPump]
-    printfn "digraph G {"
-    graph r |> List.iter(printfn "%O")
-    printfn "}"
+let main _ =
+    let contentRoot = Directory.GetCurrentDirectory()
+    let webRoot     = Path.Combine(contentRoot, "WebRoot")
+    WebHostBuilder()
+        .UseKestrel()
+        .UseContentRoot(contentRoot)
+        .UseIISIntegration()
+        .UseWebRoot(webRoot)
+        .Configure(Action<IApplicationBuilder> configureApp)
+        .ConfigureServices(configureServices)
+        .ConfigureLogging(configureLogging)
+        .Build()
+        .Run()
     0
