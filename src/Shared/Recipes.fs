@@ -90,13 +90,15 @@ let Assembler = ("Assembler", 1)
 let BasicChemicalReactor = ("Basic Chemical Reactor", 1)
 let LVCombustion = ("Basic Combustion Generator", 1)
 let LVDistillery = ("Basic Distillery", 1)
+let LVFluidExtractor = ("Basic Fluid Extractor", 1)
 
 let R o i =
     {Output = o
      Input = i}
 
 let recipes: Recipe list =
-    [{Output = SteelPlate
+    [
+     {Output = SteelPlate
       Input = [SteelIngot]}
      {Output = SteelRod
       Input = [SteelIngot]}
@@ -262,11 +264,9 @@ let recipes: Recipe list =
            ("Steel Gear", 2)]}
      R ("Steel Gear", 1) [SteelIngot .* 8]]
 
-let getRecipeItems (recipe:Recipe) =
-    [
-        yield recipe.Output
-        yield! recipe.Input
-    ]
+let getRecipeItems(recipe: Recipe) =
+    [yield recipe.Output
+     yield! recipe.Input]
     |> List.map fst
 
 let getAllItems recipes =

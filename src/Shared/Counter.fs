@@ -22,10 +22,10 @@ let graphItem item =
         n n ((item |> snd))
 
 let graphRecipe times items output =
-    sprintf "\"%s\"[shape=record, label=\"{{%s}|%s}\"];" output 
-        (items
+    sprintf "\"%s\"[shape=record, label=\"%s\"];" output 
+        (*items
          |> List.map(fun (i, q) -> sprintf "<%s>%s: %i" i i q)
-         |> String.concat "|") output 
+         |> String.concat "|"*) output 
     :: (items 
         |> List.collect
                (fun item -> 
@@ -68,6 +68,7 @@ let rec recipes rs items: ItemRecipe list =
            | None -> [Item itemq])
 
 let getDotGraph items =
+    printfn "Getting graph for %A" items 
     String.concat Environment.NewLine [
         yield "digraph G {"
         yield! recipes Recipes.recipes items |> graph

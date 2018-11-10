@@ -6,6 +6,7 @@ open Elmish.React
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.PowerPack.Fetch
+open Fable.Core.JsInterop
 
 open Thoth.Json
 
@@ -21,16 +22,15 @@ open Fulma.FontAwesome
 // we mark it as optional, because initially it will not be available from the client
 // the initial value will be requested from server
 type Model = { 
-    Items : string list option;
-    SelectedItem : string option;
+    Items : (string * int) list option;
     Graph : string option }
 
 // The Msg type defines what events/actions can occur while the application is running
 // the state of the application changes *only* in reaction to these events
 type Msg =
-| ItemsLoaded of Result<string list,exn>
-| ItemSelected of string
+| ItemsLoaded of Result<(string * int) list,exn>
 | GraphReceived of Result<string,exn>
+| ItemAmountChanged of (string * int)
 
 module Server =
 
@@ -43,11 +43,14 @@ module Server =
       |> Remoting.withRouteBuilder Route.builder
       |> Remoting.buildProxy<IRecipeApi>
 
-let initialItems() = Server.api.items
+let initialItems() = async{
+        let! items = Server.api.items
+        return items |> List.map (fun i -> (i,0))
+    }
 
 // defines the initial state and initial command (= side-effect) of the application
 let init () : Model * Cmd<Msg> =
-    let initialModel = { Items = None; SelectedItem = None; Graph = None }
+    let initialModel = { Items = None; Graph = None }
     let loadCountCmd =
         Cmd.ofAsync
             initialItems
@@ -63,14 +66,6 @@ let init () : Model * Cmd<Msg> =
 // these commands in turn, can dispatch messages to which the update function will react.
 let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
     match currentModel.Items, currentModel.Graph, msg with
-    | _, _, ItemSelected i ->
-        let nextModel = { currentModel with SelectedItem = Some i; Graph = None }
-        nextModel, Cmd.ofAsync 
-            (Server.api.chart)
-            [(i,1)]
-            (Ok >> GraphReceived)
-            (Error >> GraphReceived)
-
     | _,_,ItemsLoaded (Ok items) ->
         let nextModel = { currentModel with Items = Some items }
         nextModel, Cmd.none
@@ -78,11 +73,24 @@ let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
     | _,_,GraphReceived (Ok graph) ->
         {currentModel with Graph = Some graph} , Cmd.none 
 
+    | Some citems,_,ItemAmountChanged (i,a) ->
+        let items = citems |> List.map (fun (i',a') -> if i=i' then (i,a) else (i',a'))
+        { currentModel with Items = Some items }, Cmd.ofAsync 
+            (Server.api.chart)
+            (items |> List.where (fun (_,a) -> a > 0))
+            (Ok >> GraphReceived)
+            (Error >> GraphReceived)
+
     | _ -> currentModel, Cmd.none
 
 let ifSomeMap mapper = function
     | Some x -> List.map mapper x
     | None -> []
+
+let onTextChanged doSomethingWith =
+    OnChange <| fun (ev : Fable.Import.React.FormEvent) -> 
+        let inputTextValue : string = !!ev.target?value
+        doSomethingWith inputTextValue
 
 let menu (model:Model) (dispatch : Msg -> unit) =
     Menu.menu [ ]
@@ -90,8 +98,13 @@ let menu (model:Model) (dispatch : Msg -> unit) =
               [ str "Items" ]
           Menu.list [ ]
             (model.Items
-            |> ifSomeMap (fun i -> Menu.Item.a [ Menu.Item.Option.OnClick (fun _ -> ItemSelected i |> dispatch) ] [ str i ]))
+            |> ifSomeMap (fun i -> Menu.Item.li [ ] [ 
+                i |> fst |> str
+                input [ DefaultValue (snd i); onTextChanged (fun amount -> (fst i, int amount) |> ItemAmountChanged |> dispatch) ]
+                ]))
         ]
+
+
 
 let columns (model : Model) (dispatch : Msg -> unit) =
     Columns.columns [ ]
@@ -99,7 +112,7 @@ let columns (model : Model) (dispatch : Msg -> unit) =
               [ Card.card [ ]
                     [ Card.header [ ]
                         [ Card.Header.title [ ]
-                              [ model.SelectedItem |> Option.defaultValue "Select an item..." |> str ] ]
+                              [ model.Items |> Option.defaultValue [] |> List.where (fun (_,a) -> a > 0) |> sprintf "%A" |> str ] ]
                       Card.content [ ]
                         [ Content.content [ [Style [Overflow "auto"] :> IHTMLProp ] |> Content.Props ]
                             [ 
@@ -125,7 +138,7 @@ let navBrand =
 let view (model : Model) (dispatch : Msg -> unit) =
     div [ ]
         [   navBrand
-            Container.container [ ]
+            Container.container [ Container.IsFluid ]
               [ Columns.columns [ ]
                   [ Column.column [ Column.Width (Screen.All, Column.Is2);  ]
                       [ menu model dispatch ]
