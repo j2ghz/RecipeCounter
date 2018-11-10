@@ -11,3 +11,8 @@ module Route =
 /// to learn more, read the docs at https://zaid-ajaj.github.io/Fable.Remoting/src/basics.html
 type ICounterApi =
     { initialCounter : unit -> Async<Counter> }
+
+type IRecipeApi = {
+    items : string list Async
+    chart : list<string * int> -> string Async
+}

@@ -177,14 +177,14 @@ let recipes: Recipe list =
           [TinPlate .* 4
            TinRing
            TinScrew]}
-     {(*{Output = ElectronicCircuit
+     {Output = ElectronicCircuit
       Input =
           [SteelCasing
            CircuitBoard
            Resistor .* 2
            VacuumTube .* 2
-           RedAlloyCable1 .* 3]}*)
-      Output = RedAlloyCable1
+           RedAlloyCable1 .* 3]}
+     {Output = RedAlloyCable1
       Input = [RedAlloyWire1; RubberPlate]}
      {Output = RedAlloyWire1
       Input = [RedAlloyIngot]}
@@ -261,3 +261,16 @@ let recipes: Recipe list =
            ElectronicCircuit
            ("Steel Gear", 2)]}
      R ("Steel Gear", 1) [SteelIngot .* 8]]
+
+let getRecipeItems (recipe:Recipe) =
+    [
+        yield recipe.Output
+        yield! recipe.Input
+    ]
+    |> List.map fst
+
+let getAllItems recipes =
+    recipes
+    |> List.collect getRecipeItems
+    |> List.distinct
+    |> List.sort

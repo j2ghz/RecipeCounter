@@ -20,14 +20,17 @@ open Fulma.FontAwesome
 // in this case, we are keeping track of a counter
 // we mark it as optional, because initially it will not be available from the client
 // the initial value will be requested from server
-type Model = { Counter: Counter option }
+type Model = { 
+    Items : string list option;
+    SelectedItem : string option;
+    Graph : string option }
 
 // The Msg type defines what events/actions can occur while the application is running
 // the state of the application changes *only* in reaction to these events
 type Msg =
-| Increment
-| Decrement
-| InitialCountLoaded of Result<Counter, exn>
+| ItemsLoaded of Result<string list,exn>
+| ItemSelected of string
+| GraphReceived of Result<string,exn>
 
 module Server =
 
@@ -35,22 +38,22 @@ module Server =
     open Fable.Remoting.Client
 
     /// A proxy you can use to talk to server directly
-    let api : ICounterApi =
+    let api : IRecipeApi =
       Remoting.createApi()
       |> Remoting.withRouteBuilder Route.builder
-      |> Remoting.buildProxy<ICounterApi>
+      |> Remoting.buildProxy<IRecipeApi>
 
-let initialCounter = Server.api.initialCounter
+let initialItems() = Server.api.items
 
 // defines the initial state and initial command (= side-effect) of the application
 let init () : Model * Cmd<Msg> =
-    let initialModel = { Counter = None }
+    let initialModel = { Items = None; SelectedItem = None; Graph = None }
     let loadCountCmd =
         Cmd.ofAsync
-            initialCounter
+            initialItems
             ()
-            (Ok >> InitialCountLoaded)
-            (Error >> InitialCountLoaded)
+            (Ok >> ItemsLoaded)
+            (Error >> ItemsLoaded)
     initialModel, loadCountCmd
 
 
@@ -59,254 +62,75 @@ let init () : Model * Cmd<Msg> =
 // It can also run side-effects (encoded as commands) like calling the server via Http.
 // these commands in turn, can dispatch messages to which the update function will react.
 let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
-    match currentModel.Counter, msg with
-    | Some x, Increment ->
-        let nextModel = { currentModel with Counter = Some (x + 1) }
+    match currentModel.Items, currentModel.Graph, msg with
+    | _, _, ItemSelected i ->
+        let nextModel = { currentModel with SelectedItem = Some i; Graph = None }
+        nextModel, Cmd.ofAsync 
+            (Server.api.chart)
+            [(i,1)]
+            (Ok >> GraphReceived)
+            (Error >> GraphReceived)
+
+    | _,_,ItemsLoaded (Ok items) ->
+        let nextModel = { currentModel with Items = Some items }
         nextModel, Cmd.none
-    | Some x, Decrement ->
-        let nextModel = { currentModel with Counter = Some (x - 1) }
-        nextModel, Cmd.none
-    | _, InitialCountLoaded (Ok initialCount)->
-        let nextModel = { Counter = Some initialCount }
-        nextModel, Cmd.none
+
+    | _,_,GraphReceived (Ok graph) ->
+        {currentModel with Graph = Some graph} , Cmd.none 
 
     | _ -> currentModel, Cmd.none
 
+let ifSomeMap mapper = function
+    | Some x -> List.map mapper x
+    | None -> []
 
-let safeComponents =
-    let components =
-        span [ ]
-           [
-             a [ Href "https://saturnframework.github.io" ] [ str "Saturn" ]
-             str ", "
-             a [ Href "http://fable.io" ] [ str "Fable" ]
-             str ", "
-             a [ Href "https://elmish.github.io/elmish/" ] [ str "Elmish" ]
-             str ", "
-             a [ Href "https://mangelmaxime.github.io/Fulma" ] [ str "Fulma" ]
-             str ", "
-             a [ Href "https://dansup.github.io/bulma-templates/" ] [ str "Bulma\u00A0Templates" ]
-             str ", "
-             a [ Href "https://zaid-ajaj.github.io/Fable.Remoting/" ] [ str "Fable.Remoting" ]
-           ]
+let menu (model:Model) (dispatch : Msg -> unit) =
+    Menu.menu [ ]
+        [ Menu.label [ ]
+              [ str "Items" ]
+          Menu.list [ ]
+            (model.Items
+            |> ifSomeMap (fun i -> Menu.Item.a [ Menu.Item.Option.OnClick (fun _ -> ItemSelected i |> dispatch) ] [ str i ]))
+        ]
 
-    p [ ]
-        [ strong [] [ str "SAFE Template" ]
-          str " powered by: "
-          components ]
-
-let show = function
-| { Counter = Some x } -> string x
-| { Counter = None   } -> "Loading..."
+let columns (model : Model) (dispatch : Msg -> unit) =
+    Columns.columns [ ]
+        [ Column.column [ Column.Width (Screen.All, Column.IsFull) ]
+              [ Card.card [ ]
+                    [ Card.header [ ]
+                        [ Card.Header.title [ ]
+                              [ model.SelectedItem |> Option.defaultValue "Select an item..." |> str ] ]
+                      Card.content [ ]
+                        [ Content.content [ [Style [Overflow "auto"] :> IHTMLProp ] |> Content.Props ]
+                            [ 
+                                yield match model.Graph with
+                                        | None -> str "Loading"
+                                        | Some svg -> div [{__html = svg} |> DangerouslySetInnerHTML] []
+                             ] ] ]   ] ]
 
 let navBrand =
     Navbar.navbar [ Navbar.Color IsWhite ]
         [ Container.container [ ]
             [ Navbar.Brand.div [ ]
                 [ Navbar.Item.a [ Navbar.Item.CustomClass "brand-text" ]
-                      [ str "SAFE Admin" ]
+                      [ str "Recipe Counter" ]
                   Navbar.burger [ ]
                       [ span [ ] [ ]
                         span [ ] [ ]
                         span [ ] [ ] ] ]
               Navbar.menu [ ]
                   [ Navbar.Start.div [ ]
-                      [ Navbar.Item.a [ ]
-                            [ str "Home" ]
-                        Navbar.Item.a [ ]
-                            [ str "Orders" ]
-                        Navbar.Item.a [ ]
-                            [ str "Payments" ]
-                        Navbar.Item.a [ ]
-                            [ str "Exceptions" ] ] ] ] ]
-
-let menu =
-    Menu.menu [ ]
-        [ Menu.label [ ]
-              [ str "General" ]
-          Menu.list [ ]
-              [ Menu.Item.a [ ]
-                    [ str "Dashboard" ]
-                Menu.Item.a [ ]
-                    [ str "Customers" ] ]
-          Menu.label [ ]
-              [ str "Administration" ]
-          Menu.list [ ]
-              [ Menu.Item.a [ ]
-                  [ str "Team Settings" ]
-                li [ ]
-                    [ a [ ]
-                        [ str "Manage Your Team" ]
-                      Menu.list [ ]
-                          [ Menu.Item.a [ ]
-                                [ str "Members" ]
-                            Menu.Item.a [ ]
-                                [ str "Plugins" ]
-                            Menu.Item.a [ ]
-                                [ str "Add a member" ] ] ]
-                Menu.Item.a [ ]
-                    [ str "Invitations" ]
-                Menu.Item.a [ ]
-                    [ str "Cloud Storage Environment Settings" ]
-                Menu.Item.a [ ]
-                    [ str "Authentication" ] ]
-          Menu.label [ ]
-              [ str "Transactions" ]
-          Menu.list [ ]
-              [ Menu.Item.a [ ]
-                    [ str "Payments" ]
-                Menu.Item.a [ ]
-                    [ str "Transfers" ]
-                Menu.Item.a [ ]
-                    [ str "Balance" ] ] ]
-
-let breadcrump =
-    Breadcrumb.breadcrumb [ ]
-        [ Breadcrumb.item [ ]
-              [ a [ ] [ str "Bulma" ] ]
-          Breadcrumb.item [ ]
-              [ a [ ] [ str "Templates" ] ]
-          Breadcrumb.item [ ]
-              [ a [ ] [ str "Examples" ] ]
-          Breadcrumb.item [ Breadcrumb.Item.IsActive true ]
-              [ a [ ] [ str "Admin" ] ] ]
-
-let hero =
-    Hero.hero [ Hero.Color IsInfo
-                Hero.CustomClass "welcome" ]
-        [ Hero.body [ ]
-            [ Container.container [ ]
-                [ Heading.h1 [ ]
-                      [ str "Hello, Admin." ]
-                  safeComponents ] ] ]
-
-let info =
-    section [ Class "info-tiles" ]
-        [ Tile.ancestor [ Tile.Modifiers [ Modifier.TextAlignment (Screen.All, TextAlignment.Centered) ] ]
-            [ Tile.parent [ ]
-                  [ Tile.child [ ]
-                      [ Box.box' [ ]
-                          [ Heading.p [ ]
-                                [ str "439k" ]
-                            Heading.p [ Heading.IsSubtitle ]
-                                [ str "Users" ] ] ] ]
-              Tile.parent [ ]
-                  [ Tile.child [ ]
-                      [ Box.box' [ ]
-                          [ Heading.p [ ]
-                                [ str "59k" ]
-                            Heading.p [ Heading.IsSubtitle ]
-                                [ str "Products" ] ] ] ]
-              Tile.parent [ ]
-                  [ Tile.child [ ]
-                      [ Box.box' [ ]
-                          [ Heading.p [ ]
-                                [ str "3.4k" ]
-                            Heading.p [ Heading.IsSubtitle ]
-                                [ str "Open Orders" ] ] ] ]
-              Tile.parent [ ]
-                  [ Tile.child [ ]
-                      [ Box.box' [ ]
-                          [ Heading.p [ ]
-                                [ str "19" ]
-                            Heading.p [ Heading.IsSubtitle ]
-                                [ str "Exceptions" ] ] ] ] ] ]
-
-let counter (model : Model) (dispatch : Msg -> unit) =
-    Field.div [ Field.IsGrouped ]
-        [ Control.p [ Control.IsExpanded ]
-            [ Input.text
-                [ Input.Disabled true
-                  Input.Value (show model) ] ]
-          Control.p [ ]
-            [ Button.a
-                [ Button.Color IsInfo
-                  Button.OnClick (fun _ -> dispatch Increment) ]
-                [ str "+" ] ]
-          Control.p [ ]
-            [ Button.a
-                [ Button.Color IsInfo
-                  Button.OnClick (fun _ -> dispatch Decrement) ]
-                [ str "-" ] ] ]
-
-let columns (model : Model) (dispatch : Msg -> unit) =
-    Columns.columns [ ]
-        [ Column.column [ Column.Width (Screen.All, Column.Is6) ]
-            [ Card.card [ CustomClass "events-card" ]
-                [ Card.header [ ]
-                    [ Card.Header.title [ ]
-                        [ str "Events" ]
-                      Card.Header.icon [ ]
-                          [ Icon.faIcon [ ]
-                              [ Fa.icon Fa.I.AngleDown ] ] ]
-                  div [ Class "card-table" ]
-                      [ Content.content [ ]
-                          [ Table.table
-                              [ Table.IsFullWidth
-                                Table.IsStriped ]
-                              [ tbody [ ]
-                                  [ for _ in 1..10 ->
-                                      tr [ ]
-                                          [ td [ Style [ Width "5%" ] ]
-                                              [ Icon.faIcon
-                                                  [ ]
-                                                  [ Fa.icon Fa.I.BellO ] ]
-                                            td [ ]
-                                                [ str "Lorem ipsum dolor aire" ]
-                                            td [ ]
-                                                [ Button.a
-                                                    [ Button.Size IsSmall
-                                                      Button.Color IsPrimary ]
-                                                    [ str "Action" ] ] ] ] ] ] ]
-                  Card.footer [ ]
-                      [ Card.Footer.div [ ]
-                          [ str "View All" ] ] ] ]
-          Column.column [ Column.Width (Screen.All, Column.Is6) ]
-              [ Card.card [ ]
-                  [ Card.header [ ]
-                      [ Card.Header.title [ ]
-                          [ str "Inventory Search" ]
-                        Card.Header.icon [ ]
-                            [ Icon.faIcon [ ]
-                                [ Fa.icon Fa.I.AngleDown ] ] ]
-                    Card.content [ ]
-                        [ Content.content [ ]
-                            [ Control.div
-                                [ Control.HasIconLeft
-                                  Control.HasIconRight ]
-                                [ Input.text
-                                      [ Input.Size IsLarge ]
-                                  Icon.faIcon
-                                      [ Icon.Size IsMedium
-                                        Icon.IsLeft ]
-                                      [ Fa.icon Fa.I.Search ]
-                                  Icon.faIcon
-                                      [ Icon.Size IsMedium
-                                        Icon.IsRight ]
-                                      [ Fa.icon Fa.I.Check ] ] ] ] ]
-                Card.card [ ]
-                    [ Card.header [ ]
-                        [ Card.Header.title [ ]
-                              [ str "Counter" ]
-                          Card.Header.icon [ ]
-                              [ Icon.faIcon [ ]
-                                  [ Fa.icon Fa.I.AngleDown ] ] ]
-                      Card.content [ ]
-                        [ Content.content   [ ]
-                            [ counter model dispatch ] ] ]   ] ]
+                      [ ] ] ] ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
     div [ ]
-        [ navBrand
-          Container.container [ ]
+        [   navBrand
+            Container.container [ ]
               [ Columns.columns [ ]
-                  [ Column.column [ Column.Width (Screen.All, Column.Is3) ]
-                      [ menu ]
-                    Column.column [ Column.Width (Screen.All, Column.Is9) ]
-                      [ breadcrump
-                        hero
-                        info
-                        columns model dispatch ] ] ] ]
+                  [ Column.column [ Column.Width (Screen.All, Column.Is2);  ]
+                      [ menu model dispatch ]
+                    Column.column [ Column.Width (Screen.All, Column.Is10) ]
+                      [ columns model dispatch ] ] ] ]
 
 #if DEBUG
 open Elmish.Debug

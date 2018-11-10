@@ -20,10 +20,16 @@ let counterApi = {
     initialCounter = getInitCounter >> Async.AwaitTask
 }
 
+let recipeApi : IRecipeApi = {
+    items = Recipes.recipes |> Recipes.getAllItems |> async.Return
+    chart = Counter.getDotGraph >> Graphviz.toSvg >> async.Return
+}
+
 let webApp =
     Remoting.createApi()
     |> Remoting.withRouteBuilder Route.builder
-    |> Remoting.fromValue counterApi
+    //|> Remoting.fromValue counterApi
+    |> Remoting.fromValue recipeApi
     |> Remoting.buildHttpHandler
 
 let app = application {

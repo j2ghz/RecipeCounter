@@ -1,6 +1,7 @@
 module Counter
 // Learn more about F# at http://fsharp.org
 open Recipes
+open System
 
 type ItemRecipe =
     | Item of Itemq
@@ -66,9 +67,9 @@ let rec recipes rs items: ItemRecipe list =
                                          |> recipes rs)
            | None -> [Item itemq])
 
-let main argv =
-    let r = recipes Recipes.recipes [TinRotor .*2; LVPump]
-    printfn "digraph G {"
-    graph r |> List.iter(printfn "%O")
-    printfn "}"
-    0
+let getDotGraph items =
+    String.concat Environment.NewLine [
+        yield "digraph G {"
+        yield! recipes Recipes.recipes items |> graph
+        yield "}"
+    ]
