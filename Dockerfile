@@ -1,6 +1,6 @@
 FROM microsoft/dotnet:sdk AS build-env
 WORKDIR /app
-RUN dotnet tool install fake-cli -g
+RUN dotnet tool install fake-cli -g && export PATH="$PATH:/root/.dotnet/tools"
 
 # Copy everything else and build
 COPY . ./
