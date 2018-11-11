@@ -42,5 +42,6 @@ let createLogger =
         .WriteTo.Console()
         .CreateLogger();
 
-run (app.UseSerilog(createLogger,false))
+Log.Logger <- createLogger
+run (app.UseSerilog())
  

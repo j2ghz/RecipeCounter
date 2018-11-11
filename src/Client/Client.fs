@@ -83,7 +83,7 @@ let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
 
     | Some citems,ItemAmountChanged (i,a) ->
         let items = citems |> List.map (fun (i',a') -> if i=i' then (i,a) else (i',a'))
-        { currentModel with Items = Some items }, Cmd.ofAsync 
+        { currentModel with Items = Some items; Graph = None }, Cmd.ofAsync 
             (Server.api.chart)
             (items |> List.where (fun (_,a) -> a > 0))
             (Ok >> GraphReceived)

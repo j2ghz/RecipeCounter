@@ -70,7 +70,7 @@ let rec recipes rs items: ItemRecipe list =
 
 let getDotGraph (items:Items) =
     Log.Information("Getting graph for {items}",items) 
-    String.concat Environment.NewLine [
+    String.concat "" [
         yield "digraph G {"
         yield! recipes Recipes.recipes items |> graph
         yield "}"
