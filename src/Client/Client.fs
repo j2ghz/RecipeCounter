@@ -108,7 +108,7 @@ let menu (model:Model) (dispatch : Msg -> unit) =
             (model.Items
             |> ifSomeMap (fun i -> Menu.Item.li [ ] [ 
                 i |> fst |> str
-                input [ DefaultValue (snd i); onTextChanged (fun amount -> (fst i, int amount) |> ItemAmountChanged |> dispatch) ]
+                Input.number [ Input.Option.DefaultValue (snd i |> string); Input.Option.OnChange (fun event -> (fst i, event.Value |> int) |> ItemAmountChanged |> dispatch) ]
                 ]))
         ]
 
