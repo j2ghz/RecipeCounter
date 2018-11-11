@@ -1,4 +1,8 @@
 FROM microsoft/dotnet:sdk AS build-env
+RUN curl -sL https://deb.nodesource.com/setup_11.x | bash - && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        nodejs
+
 WORKDIR /app
 RUN dotnet tool install fake-cli -g
 
