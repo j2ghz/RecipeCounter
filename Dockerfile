@@ -7,7 +7,8 @@ RUN curl -sL https://deb.nodesource.com/setup_11.x | bash - \
     && apt-get update && apt-get install -y --no-install-recommends \
         nodejs \
         yarn \
-        mono-devel
+        mono-devel \
+        graphviz
 
 WORKDIR /app
 RUN dotnet tool install fake-cli -g
