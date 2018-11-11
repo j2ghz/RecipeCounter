@@ -65,15 +65,23 @@ let init () : Model * Cmd<Msg> =
 // It can also run side-effects (encoded as commands) like calling the server via Http.
 // these commands in turn, can dispatch messages to which the update function will react.
 let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
-    match currentModel.Items, currentModel.Graph, msg with
-    | _,_,ItemsLoaded (Ok items) ->
+    match currentModel.Items, msg with
+    | _,ItemsLoaded (Ok items) ->
         let nextModel = { currentModel with Items = Some items }
         nextModel, Cmd.none
 
-    | _,_,GraphReceived (Ok graph) ->
+    | _,ItemsLoaded (Error exn) ->
+        eprintfn "%O" exn
+        currentModel, Cmd.none
+
+    | _,GraphReceived (Ok graph) ->
         {currentModel with Graph = Some graph} , Cmd.none 
 
-    | Some citems,_,ItemAmountChanged (i,a) ->
+    | _,GraphReceived (Error exn) ->
+        eprintfn "%O" exn
+        currentModel, Cmd.none
+
+    | Some citems,ItemAmountChanged (i,a) ->
         let items = citems |> List.map (fun (i',a') -> if i=i' then (i,a) else (i',a'))
         { currentModel with Items = Some items }, Cmd.ofAsync 
             (Server.api.chart)

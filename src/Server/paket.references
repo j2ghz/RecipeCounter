@@ -3,3 +3,5 @@ group Server
     Saturn
     Fable.Remoting.Giraffe
     FsDot
+    Serilog.AspNetCore
+    Serilog.Sinks.Console

@@ -1,7 +1,8 @@
 module Counter
 // Learn more about F# at http://fsharp.org
-open Recipes
+open Shared
 open System
+open Serilog
 
 type ItemRecipe =
     | Item of Itemq
@@ -67,8 +68,8 @@ let rec recipes rs items: ItemRecipe list =
                                          |> recipes rs)
            | None -> [Item itemq])
 
-let getDotGraph items =
-    printfn "Getting graph for %A" items 
+let getDotGraph (items:Items) =
+    Log.Information("Getting graph for {items}",items) 
     String.concat Environment.NewLine [
         yield "digraph G {"
         yield! recipes Recipes.recipes items |> graph

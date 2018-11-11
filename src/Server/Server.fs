@@ -7,18 +7,12 @@ open FSharp.Control.Tasks.V2
 open Giraffe
 open Saturn
 open Shared
-
 open Fable.Remoting.Server
 open Fable.Remoting.Giraffe
+open Serilog
 
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
-
-let getInitCounter() : Task<Counter> = task { return 42 }
-
-let counterApi = {
-    initialCounter = getInitCounter >> Async.AwaitTask
-}
 
 let recipeApi : IRecipeApi = {
     items = Recipes.recipes |> Recipes.getAllItems |> async.Return
@@ -32,12 +26,21 @@ let webApp =
     |> Remoting.fromValue recipeApi
     |> Remoting.buildHttpHandler
 
-let app = application {
+let app = (application {
     url ("http://0.0.0.0:" + port.ToString() + "/")
     use_router webApp
     memory_cache
     use_static publicPath
     use_gzip
-}
+})
 
-run app
+let createLogger =
+    LoggerConfiguration()
+        .MinimumLevel.Debug()
+        //.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+        .Enrich.FromLogContext()
+        .WriteTo.Console()
+        .CreateLogger();
+
+run (app.UseSerilog(createLogger,false))
+ 

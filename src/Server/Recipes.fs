@@ -1,18 +1,6 @@
 module Recipes
 
-open System.Collections.Immutable
-
-type Item = string
-
-type Itemq = Item * int
-
-type Items = Itemq list
-
-type Recipe =
-    {Input: Items
-     Output: Itemq}
-
-type Recipeq = Recipe * int
+open Shared
 
 let inline (.*) (i, q) number = (i, q * number)
 //Misc
