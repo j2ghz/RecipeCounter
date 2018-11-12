@@ -647,7 +647,6 @@ NUGET
     Fable.Remoting.Server (4.4)
       Fable.Remoting.Json (>= 2.2)
       FSharp.Core (>= 4.3.4)
-    FsDot (0.1.1)
     FSharp.Core (4.5.2)
     Giraffe (3.4)
       FSharp.Core (>= 4.5.2)

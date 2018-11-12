@@ -253,12 +253,10 @@ let recipes: Recipe list =
      R ("Steel Gear", 1) [SteelIngot .* 8]]
 
 let getRecipeItems(recipe: Recipe) =
-    [yield recipe.Output
-     yield! recipe.Input]
-    |> List.map fst
+    fst recipe.Output
 
 let getAllItems recipes =
     recipes
-    |> List.collect getRecipeItems
+    |> List.map getRecipeItems
     |> List.distinct
     |> List.sort

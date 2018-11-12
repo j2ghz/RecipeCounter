@@ -2,20 +2,15 @@ module Client
 
 open Elmish
 open Elmish.React
-
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.PowerPack.Fetch
 open Fable.Core.JsInterop
-
 open Thoth.Json
-
 open Shared
-
-
 open Fulma
-
 open Fulma.FontAwesome
+open Fable.Import
 
 // The model holds data that you want to keep track of while the application is running
 // in this case, we are keeping track of a counter
@@ -23,7 +18,7 @@ open Fulma.FontAwesome
 // the initial value will be requested from server
 type Model = { 
     Items : (string * int) list option;
-    Graph : string option }
+    Graph : obj }
 
 // The Msg type defines what events/actions can occur while the application is running
 // the state of the application changes *only* in reaction to these events
@@ -48,9 +43,14 @@ let initialItems() = async{
         return items |> List.map (fun i -> (i,0))
     }
 
+let d3g: obj = importAll "d3-graphviz"
+let d3t: obj = importAll "d3-transition"
+
 // defines the initial state and initial command (= side-effect) of the application
 let init () : Model * Cmd<Msg> =
-    let initialModel = { Items = None; Graph = None }
+    let initialModel = { 
+        Items = None; 
+        Graph = null}
     let loadCountCmd =
         Cmd.ofAsync
             initialItems
@@ -59,15 +59,13 @@ let init () : Model * Cmd<Msg> =
             (Error >> ItemsLoaded)
     initialModel, loadCountCmd
 
-
-
 // The update function computes the next state of the application based on the current state and the incoming events/messages
 // It can also run side-effects (encoded as commands) like calling the server via Http.
 // these commands in turn, can dispatch messages to which the update function will react.
 let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
     match currentModel.Items, msg with
     | _,ItemsLoaded (Ok items) ->
-        let nextModel = { currentModel with Items = Some items }
+        let nextModel = { currentModel with Items = Some items; Graph = d3g?graphviz("#graph") }
         nextModel, Cmd.none
 
     | _,ItemsLoaded (Error exn) ->
@@ -75,7 +73,8 @@ let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
         currentModel, Cmd.none
 
     | _,GraphReceived (Ok graph) ->
-        {currentModel with Graph = Some graph} , Cmd.none 
+        currentModel.Graph?renderDot(graph)
+        currentModel , Cmd.none 
 
     | _,GraphReceived (Error exn) ->
         eprintfn "%O" exn
@@ -83,7 +82,7 @@ let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
 
     | Some citems,ItemAmountChanged (i,a) ->
         let items = citems |> List.map (fun (i',a') -> if i=i' then (i,a) else (i',a'))
-        { currentModel with Items = Some items; Graph = None }, Cmd.ofAsync 
+        { currentModel with Items = Some items }, Cmd.ofAsync 
             (Server.api.chart)
             (items |> List.where (fun (_,a) -> a > 0))
             (Ok >> GraphReceived)
@@ -124,10 +123,8 @@ let columns (model : Model) (dispatch : Msg -> unit) =
                       Card.content [ ]
                         [ Content.content [ [Style [Overflow "auto"] :> IHTMLProp ] |> Content.Props ]
                             [ 
-                                yield match model.Graph with
-                                        | None -> str "Loading"
-                                        | Some svg -> div [{__html = svg} |> DangerouslySetInnerHTML] []
-                             ] ] ]   ] ]
+                                div [ Id "graph" ] []
+                             ] ] ] ] ]
 
 let navBrand =
     Navbar.navbar [ Navbar.Color IsWhite ]

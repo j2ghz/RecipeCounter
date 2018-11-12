@@ -16,7 +16,7 @@ let port = 8085us
 
 let recipeApi : IRecipeApi = {
     items = Recipes.recipes |> Recipes.getAllItems |> async.Return
-    chart = Counter.getDotGraph >> Graphviz.toSvg >> async.Return
+    chart = Counter.getDotGraph >> async.Return
 }
 
 let webApp =
