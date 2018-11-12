@@ -26,10 +26,9 @@ type Msg =
 | ItemsLoaded of Result<(string * int) list,exn>
 | GraphReceived of Result<string,exn>
 | ItemAmountChanged of (string * int)
+| GraphUpdated
 
 module Server =
-
-    open Shared
     open Fable.Remoting.Client
 
     /// A proxy you can use to talk to server directly
@@ -72,9 +71,8 @@ let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
         eprintfn "%O" exn
         currentModel, Cmd.none
 
-    | _,GraphReceived (Ok graph) ->
-        currentModel.Graph?renderDot(graph)
-        currentModel , Cmd.none 
+    | _,GraphReceived (Ok graph) ->        
+        currentModel , Cmd.ofFunc (fun () -> currentModel.Graph?renderDot(graph)) () (fun _ -> GraphUpdated) (fun _ -> GraphUpdated)
 
     | _,GraphReceived (Error exn) ->
         eprintfn "%O" exn
@@ -93,11 +91,6 @@ let update (msg : Msg) (currentModel : Model) : Model * Cmd<Msg> =
 let ifSomeMap mapper = function
     | Some x -> List.map mapper x
     | None -> []
-
-let onTextChanged doSomethingWith =
-    OnChange <| fun (ev : Fable.Import.React.FormEvent) -> 
-        let inputTextValue : string = !!ev.target?value
-        doSomethingWith inputTextValue
 
 let menu (model:Model) (dispatch : Msg -> unit) =
     Menu.menu [ ]
@@ -130,7 +123,7 @@ let navBrand =
     Navbar.navbar [ Navbar.Color IsWhite ]
         [ Container.container [ ]
             [ Navbar.Brand.div [ ]
-                [ Navbar.Item.a [ Navbar.Item.CustomClass "brand-text" ]
+                [ Navbar.Item.a [ Navbar.Item.CustomClass "brand-text"; Navbar.Item.Props <| [ Href "/" ] ]
                       [ str "Recipe Counter" ]
                   Navbar.burger [ ]
                       [ span [ ] [ ]
