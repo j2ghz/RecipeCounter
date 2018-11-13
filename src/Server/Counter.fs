@@ -1,8 +1,9 @@
 module Counter
+
 // Learn more about F# at http://fsharp.org
+open Serilog
 open Shared
 open System
-open Serilog
 
 type ItemRecipe =
     | Item of Itemq
@@ -23,15 +24,16 @@ let graphItem item =
         n n ((item |> snd))
 
 let graphRecipe times items output =
-    sprintf "\"%s\"[shape=record, label=\"%s\"];" output 
-        (*items
+    sprintf "\"%s\"[shape=record, label=\"{%s ⨉ %i|%i}\"];" (output |> fst) 
+        ((*items
          |> List.map(fun (i, q) -> sprintf "<%s>%s: %i" i i q)
-         |> String.concat "|"*) output 
+         |> String.concat "|"*)
+         output |> fst) times ((output |> snd) * times) 
     :: (items 
         |> List.collect
                (fun item -> 
                [sprintf "\"%s\" -> \"%s\":\"%s\" [label=\"%i\"];" (item |> fst) 
-                    output (item |> fst) (times * snd item)]))
+                    (output |> fst) (item |> fst) (times * snd item)]))
 
 let graph(irs: ItemRecipe list) =
     [yield! irs
@@ -50,10 +52,11 @@ let graph(irs: ItemRecipe list) =
             |> List.map(fun (i, q) -> (i, q |> List.sumBy snd))
             |> List.collect
                    (fun (recipe, times) -> 
-                   [yield! (graphRecipe times recipe.Input 
-                                (recipe.Output |> fst))])]
+                   [yield! (graphRecipe times recipe.Input recipe.Output)])]
+
 let divideRoundUp a b =
-    (a / b) + (if a % b = 0 then 0 else 1)
+    (a / b) + (if a % b = 0 then 0
+               else 1)
 
 let rec recipes rs items: ItemRecipe list =
     items
@@ -68,10 +71,8 @@ let rec recipes rs items: ItemRecipe list =
                                          |> recipes rs)
            | None -> [Item itemq])
 
-let getDotGraph (items:Items) =
-    Log.Information("Getting graph for {items}",items) 
-    String.concat "" [
-        yield "digraph G {"
-        yield! recipes Recipes.recipes items |> graph
-        yield "}"
-    ]
+let getDotGraph(items: Items) =
+    Log.Information("Getting graph for {items}", items)
+    String.concat "" [yield "digraph G {"
+                      yield! recipes Recipes.recipes items |> graph
+                      yield "}"]

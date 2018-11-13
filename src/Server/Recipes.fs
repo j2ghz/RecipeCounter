@@ -63,6 +63,10 @@ let CoatedCircuitBoard = ("Coated Circuit Board", 1)
 let WoodPlank = ("Wood Plank", 1)
 let WoodPulp = ("Wood Pulp", 1)
 let Wood = ("Wood", 1)
+let RefinedGlue = ("Refined Glue", 1)
+let CopperFoil = ("Copper Foil", 1)
+let CopperPlate = ("Copper Plate", 1)
+let MoltenRedAlloy = ("Molten Red Alloy", 1)
 //Components
 let LVMachineCasing = ("LV Machine Casing", 1)
 let LVMachineHull = ("LV Machine Hull", 1)
@@ -194,31 +198,21 @@ let recipes: Recipe list =
       Input = [TinRod]}
      {Output = SteelCasing
       Input = [SteelPlate]}
-     {Output = Resistor
-      Input =
-          [FineCopperWire .* 2
-           CoalDust
-           CopperWire1 .* 2
-           StickyResin .* 2]}
+     R (Resistor .* 4) [FineCopperWire .* 4; CopperWire1 .* 4; CoalDust]
      {Output = FineCopperWire .* 4
       Input = [CopperWire1]}
-     {Output = VacuumTube
-      Input =
-          [RedAlloyBolt
-           GlassTube
-           FineCopperWire .* 2
-           CopperWire1 .* 3
-           SteelRod .* 2]}
+     R VacuumTube [GlassTube; CopperWire1; SteelRod; MoltenRedAlloy .* 18]
+     R (MoltenRedAlloy .* 144) [RedAlloyIngot]
      {Output = RedAlloyBolt .* 2
       Input = [RedAlloyRod]}
      {Output = RedAlloyRod
       Input = [RedAlloyIngot]}
      {Output = TinWire1 .* 2
       Input = [TinIngot]}
-     {Output = CircuitBoard
-      Input =
-          [CoatedCircuitBoard
-           CopperWire1 .* 8]}
+     R CopperPlate [CopperIngot]
+     R (CopperFoil .* 4) [CopperPlate]
+     R CircuitBoard [RefinedGlue .* 72; WoodPlank; CopperFoil .* 4]
+     R (RefinedGlue .* 100) [StickyResin]
      {Output = CoatedCircuitBoard
       Input =
           [WoodPlank
