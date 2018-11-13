@@ -24,11 +24,11 @@ let graphItem item =
         n n ((item |> snd))
 
 let graphRecipe times items output =
-    sprintf "\"%s\"[shape=record, label=\"{%s ⨉ %i|%i}\"];" (output |> fst) 
-        ((*items
-         |> List.map(fun (i, q) -> sprintf "<%s>%s: %i" i i q)
-         |> String.concat "|"*)
-         output |> fst) times ((output |> snd) * times) 
+    sprintf "\"%s\"[shape=record, label=\"{{%s}|%s ⨉ %i|%i}\"];" (output |> fst) 
+        (items
+         |> List.map(fun (i, q) -> sprintf "<%s>%i" i q)
+         |> String.concat "|")
+         (output |> fst) times ((output |> snd) * times) 
     :: (items 
         |> List.collect
                (fun item -> 
