@@ -107,7 +107,7 @@ let menu (model:Model) (dispatch : Msg -> unit) =
 
 
 let columns (model : Model) (dispatch : Msg -> unit) =
-    Columns.columns [ ]
+    (*Columns.columns [ ]
         [ Column.column [ Column.Width (Screen.All, Column.IsFull) ]
               [ Card.card [ ]
                     [ Card.header [ ]
@@ -115,9 +115,9 @@ let columns (model : Model) (dispatch : Msg -> unit) =
                               [ model.Items |> Option.defaultValue [] |> List.where (fun (_,a) -> a > 0) |> sprintf "%A" |> str ] ]
                       Card.content [ ]
                         [ Content.content [ [Style [Overflow "auto"] :> IHTMLProp ] |> Content.Props ]
-                            [ 
-                                div [ Id "graph" ] []
-                             ] ] ] ] ]
+                            [ *)
+                                div [ Id "graph"; Style <| [ Height "100%"; Width "100%"; Overflow "none"  ] ] []
+                             //] ] ] ] ]
 
 let navBrand =
     Navbar.navbar [ Navbar.Color IsWhite ]
@@ -138,9 +138,9 @@ let view (model : Model) (dispatch : Msg -> unit) =
         [   navBrand
             Container.container [ Container.IsFluid ]
               [ Columns.columns [ ]
-                  [ Column.column [ Column.Width (Screen.All, Column.Is2);  ]
+                  [ Column.column [ [[ OverflowY "scroll" ;Height "calc(100vh - 60px)"] |> Style :> IHTMLProp] |> Column.Props ]
                       [ menu model dispatch ]
-                    Column.column [ Column.Width (Screen.All, Column.Is10) ]
+                    Column.column [ [[ OverflowY "none" ;Height "calc(100vh - 60px)"] |> Style :> IHTMLProp] |> Column.Props; Column.Width (Screen.All, Column.Is10) ]
                       [ columns model dispatch ] ] ] ]
 
 #if DEBUG

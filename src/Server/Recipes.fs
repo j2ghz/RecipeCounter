@@ -83,6 +83,10 @@ let BasicChemicalReactor = ("Basic Chemical Reactor", 1)
 let LVCombustion = ("Basic Combustion Generator", 1)
 let LVDistillery = ("Basic Distillery", 1)
 let LVFluidExtractor = ("Basic Fluid Extractor", 1)
+//GoodCircuits
+let GoodCircuitBoard = ("Good Circuit Board", 1)
+let GoldWire1 = ("1x Gold Wire", 1)
+let PhenolicCircuitBoard = ("Phenolic Circuit Board", 1)
 
 let R o i =
     {Output = o
@@ -90,6 +94,8 @@ let R o i =
 
 let recipes: Recipe list =
     [
+     R GoodCircuitBoard [PhenolicCircuitBoard; GoldWire1 .* 8]
+     R PhenolicCircuitBoard [WoodPulp; RefinedGlue .* 36]
      {Output = SteelPlate
       Input = [SteelIngot]}
      {Output = SteelRod
