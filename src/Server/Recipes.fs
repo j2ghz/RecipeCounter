@@ -3,6 +3,12 @@ module Recipes
 open Shared
 
 let inline (.*) (i, q) number = (i, q * number)
+let R o i =
+    {Output = o
+     Input = i}
+let Ri o x i =
+    {Output = o .* x
+     Input = i}
 //Misc
 let GlassTube = ("Glass Tube", 1)
 let GlassDust = ("Glass Dust", 1)
@@ -87,13 +93,16 @@ let LVFluidExtractor = ("Basic Fluid Extractor", 1)
 let GoodCircuitBoard = ("Good Circuit Board", 1)
 let GoldWire1 = ("1x Gold Wire", 1)
 let PhenolicCircuitBoard = ("Phenolic Circuit Board", 1)
-
-let R o i =
-    {Output = o
-     Input = i}
+let Diode = ("Diode", 1)
+let GalliumArsenideSmallPile = ("Small Pile of Gallium Arsenide Dust", 1)
+let MoltenGlass = ("Molten Glass", 1)
+let QuartziteDust = ("Quartzite Dust", 1)
 
 let recipes: Recipe list =
     [
+     R QuartziteDust [QuartzSand .* 60]
+     Ri MoltenGlass 72 [QuartziteDust]
+     Ri Diode 2 [GalliumArsenideSmallPile;FineCopperWire .* 4; MoltenGlass .* 288]
      R GoodCircuitBoard [PhenolicCircuitBoard; GoldWire1 .* 8]
      R PhenolicCircuitBoard [WoodPulp; RefinedGlue .* 36]
      {Output = SteelPlate
