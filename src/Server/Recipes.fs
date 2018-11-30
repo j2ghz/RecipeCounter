@@ -114,7 +114,7 @@ let recipes: Recipe list =
     [
      R (RedstoneAlloyDust .*2) [Redstone;CoalDust;SiliconDust]
      R (ConductiveIronDust .* 2) [SilverDust;IronDust;RedstoneAlloyDust]
-     R (BlackBronzeDust .* 5) [GoldDust; SilverDust;CopperDust]
+     R (BlackBronzeDust .* 5) [GoldDust; SilverDust;CopperDust.*3]
      R (BlackSteel .* 5) [SteelDust .* 3; NickelDust; BlackBronzeDust]
      R ("Energetic Alloy Dust", 3) [GoldDust;BlackSteel;ConductiveIronDust]
      R QuartziteDust [QuartzSand .* 60]
