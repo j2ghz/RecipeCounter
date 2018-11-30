@@ -97,9 +97,26 @@ let Diode = ("Diode", 1)
 let GalliumArsenideSmallPile = ("Small Pile of Gallium Arsenide Dust", 1)
 let MoltenGlass = ("Molten Glass", 1)
 let QuartziteDust = ("Quartzite Dust", 1)
+//Conductive
+let BlackSteel = ("Black Steel Dust", 1)
+let ConductiveIronDust = ("Conductive Iron Dust", 1)
+let GoldDust = ("Gold Dust", 1)
+let SteelDust = ("Steel Dust", 1)
+let NickelDust = ("Nickel Dust", 1)
+let BlackBronzeDust = ("Black Bronze Dust", 1)
+let SilverDust = ("Silver Dust", 1)
+let CopperDust = ("Copper Dust", 1)
+let IronDust = ("Iron Dust", 1)
+let RedstoneAlloyDust = ("Redstone Alloy Dust", 1)
+let SiliconDust = ("Silicon Dust", 1)
 
 let recipes: Recipe list =
     [
+     R (RedstoneAlloyDust .*2) [Redstone;CoalDust;SiliconDust]
+     R (ConductiveIronDust .* 2) [SilverDust;IronDust;RedstoneAlloyDust]
+     R (BlackBronzeDust .* 5) [GoldDust; SilverDust;CopperDust]
+     R (BlackSteel .* 5) [SteelDust .* 3; NickelDust; BlackBronzeDust]
+     R ("Energetic Alloy Dust", 3) [GoldDust;BlackSteel;ConductiveIronDust]
      R QuartziteDust [QuartzSand .* 60]
      Ri MoltenGlass 72 [QuartziteDust]
      Ri Diode 2 [GalliumArsenideSmallPile;FineCopperWire .* 4; MoltenGlass .* 288]
