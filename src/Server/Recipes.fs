@@ -109,9 +109,28 @@ let CopperDust = ("Copper Dust", 1)
 let IronDust = ("Iron Dust", 1)
 let RedstoneAlloyDust = ("Redstone Alloy Dust", 1)
 let SiliconDust = ("Silicon Dust", 1)
+//Molten Polyethylene
+let MoltenPolyethylene = ("Molten Polyethylene", 1)
+let Oxygen = ("Oxygen", 1)
+let Ethylene = ("Ethylene", 1)
+let Ethanol = ("Ethanol", 1)
+let SulfuricAcid = ("Sulfuric Acid", 1)
+let FermentedBiomass = ("Fermented Biomass", 1)
+let Biomass = ("Biomass", 1)
+let Plantmass = ("Plantmass", 1)
+let Plantball = ("Plantball", 1)
+let BioChaff = ("Bio Chaff", 1)
+let Water = ("Water", 1)
 
 let recipes: Recipe list =
     [
+     R (Plantmass) [Plantball .* 2]
+     R (BioChaff) [Plantmass]
+     R (Biomass .* 750) [Water .* 750; BioChaff]
+     R (FermentedBiomass .* 100) [Biomass .* 100]
+     R (Ethanol .* 150) [FermentedBiomass .* 1000]
+     R (Ethylene .* 1000) [Ethanol .* 1000; SulfuricAcid .* 1000]
+     R (MoltenPolyethylene .* 216) [Oxygen .* 1000; Ethylene .* 144]
      R (RedstoneAlloyDust .*2) [Redstone;CoalDust;SiliconDust]
      R (ConductiveIronDust .* 2) [SilverDust;IronDust;RedstoneAlloyDust]
      R (BlackBronzeDust .* 5) [GoldDust; SilverDust;CopperDust.*3]
