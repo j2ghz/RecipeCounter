@@ -12,3 +12,5 @@ release.sh
 .idea/
 *.DotSettings.user
 deploy
+lcov.info
+coverage.xml*
